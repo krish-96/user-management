@@ -1,0 +1,8 @@
+# The added files will be removed during the docker image build
+logs.log
+
+notes
+
+k8s_auth/local_settings.py
+
+K8S_manifest

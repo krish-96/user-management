@@ -1,0 +1,12 @@
+venv
+
+.idea
+
+
+notes
+
+#Local settings file
+k8s_auth/local_settings.py
+
+staticfiles
+

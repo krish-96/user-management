@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: django-user-management-configs
+  namespace: django
+data:
+  settings.py: |
+      import os
+      import sys
+  
+      # SECURITY WARNING: don't run with debug turned on in production!
+      DEBUG = True
+      ALLOWED_HOSTS = ["*"]
+  
+      STORAGES = {
+          "default": {
+              "BACKEND": "django.core.files.storage.FileSystemStorage",
+          },
+          "staticfiles": {
+              "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+          },
+          "example": {
+              "BACKEND": "django.core.files.storage.FileSystemStorage",
+              "OPTIONS": {
+                  "location": "/example",
+                  "base_url": "/example/",
+              },
+          },
+      }
+  
+      DATABASES = {
+          "default": {
+              "ENGINE": "django.db.backends.postgresql",
+              "NAME": os.getenv('DB_NAME', "k8s_auth"),
+              "USER": os.getenv('DB_USER', "k8s_auth"),
+              "PASSWORD": os.getenv('DB_PASSWORD', "password"),
+              "HOST": os.getenv('DB_HOST', "127.0.0.1"),
+              "PORT": os.getenv('DB_PORT', "5432"),
+              "OPTIONS": {
+                  "pool": {
+                      "min_size": 2,
+                      "max_size": 4,
+                      "timeout": 10,
+                  }
+              },
+      
+          }
+      }
+  
+      LOG_LEVEL = "DEBUG"
+      LOG_FILE_SIZE = 1024 * 1024 * 10 # 10 MB
+      LOG_DATETIME = True
+      LOG_DATETIME_FORMAT = "%d-%m-%Y %H:%M:%S %p"
+  
+      LOGGING = {
+          "version": 1,
+          "disable_existing_loggers": False,
+          "formatters": {
+              "verbose": {
+                  "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                  "style": "{",
+              },
+              "simple": {
+                  "format": "{levelname} {asctime} {module} {message}",
+                  "style": "{",
+              },
+              "custom": {
+                  "format": "{message}",
+                  "style": "{",
+              },
+          },
+          "handlers": {
+              "console": {
+                  "class": "logging.StreamHandler",
+                  "formatter": "simple",
+                  "stream": sys.stdout
+              },
+              "file": {
+                  "formatter": "simple",
+                  "class": "logging.handlers.RotatingFileHandler",
+                  "filename": "/var/log/k8s_auth/django_auth.logs",
+                  "maxBytes": LOG_FILE_SIZE,
+                  "backupCount": 3
+              },
+              "custom_console": {
+                  "class": "logging.StreamHandler",
+                  "formatter": "custom",
+                  "stream": "ext://sys.stdout"
+              },
+              "custom_file": {
+                  "class": "logging.handlers.RotatingFileHandler",
+                  "formatter": "custom",
+                  "filename": "/var/log/k8s_auth/k8s_auth.log",
+                  "maxBytes": LOG_FILE_SIZE,
+                  "backupCount": 3
+              },
+          },
+          "loggers": {
+              "console": {
+                  "handlers": ["console"],
+                  "level": "DEBUG",
+                  "propagate": True,
+              },
+              "file": {
+                  "handlers": ["file"],
+                  "level": "DEBUG",
+                  "propagate": True,
+              },
+              "console_file": {
+                  "handlers": ["console", "file"],
+                  "level": "DEBUG",
+                  "propagate": False,
+              },
+              "custom": {
+                  "handlers": ["custom_console", "custom_file"],
+                  "level": "DEBUG",
+                  "propagate": False,
+              },
+          },
+      }

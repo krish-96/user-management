@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: psql-user-management-deployment
+  labels:
+    app: user-management-DataBase
+  namespace: django
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: psql-django-app
+  template:
+    metadata:
+      labels:
+        app: psql-django-app
+    spec:
+      volumes:
+        - name: user-management-volume
+          persistentVolumeClaim:
+            claimName: user-management-pvc
+      containers:
+        - name: psql-user-management-container
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: psql-user-management-secret
+                  key: password
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: psql-user-management-configs
+                  key: user
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: psql-user-management-configs
+                  key: db_name
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: user-management-volume
